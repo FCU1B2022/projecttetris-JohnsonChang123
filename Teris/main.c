@@ -10,6 +10,10 @@
 #define DOWN_KEY 0x28     // The key to move down, default = 0x28 (down arrow)
 #define FALL_KEY 0x20     // The key to fall, default = 0x20 (spacebar)
 
+#define chang_KEY 0x45     // The key to chang, default = 0x45 (E)
+
+
+
 #define FALL_DELAY 500    // The delay between each fall, default = 500
 #define RENDER_DELAY 100  // The delay between each frame, default = 100
 
@@ -18,6 +22,10 @@
 #define ROTATE_FUNC() GetAsyncKeyState(ROTATE_KEY) & 0x8000
 #define DOWN_FUNC() GetAsyncKeyState(DOWN_KEY) & 0x8000
 #define FALL_FUNC() GetAsyncKeyState(FALL_KEY) & 0x8000
+
+#define chang_FUNC() GetAsyncKeyState(chang_KEY) & 0x8000
+
+
 
 #define CANVAS_WIDTH 10
 #define CANVAS_HEIGHT 20
@@ -320,7 +328,8 @@ bool move(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], int originalX, int original
 }
 
 void printCanvas(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
-{
+{      
+      
     printf("\033[0;0H\n");
     for (int i = 0; i < CANVAS_HEIGHT; i++) {
         printf("|");
@@ -329,9 +338,11 @@ void printCanvas(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
         }
         printf("\033[0m|\n");
     }
-
+    printf("分數:%d\n", state->score);
     Shape shapeData = shapes[state->queue[1]];
+    
     printf("\033[%d;%dHNext:", 3, CANVAS_WIDTH * 2 + 5);
+    
     for (int i = 1; i <= 3; i++)
     {
         shapeData = shapes[state->queue[i]];
@@ -417,7 +428,14 @@ void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
     }
     else if (FALL_FUNC()) {
         state->fallTime += FALL_DELAY * CANVAS_HEIGHT;
-    }
+    }///////////////////////////////
+    else if (chang_FUNC()) {
+        //從move裡拿cleal fun
+        state->queue[0] = state->queue[1];
+        state->queue[1] = state->queue[2];
+        state->queue[2] = state->queue[3];
+        state->queue[3] = rand() % 7;
+    }//////////////////////////////////////
 
     state->fallTime += RENDER_DELAY;
 
