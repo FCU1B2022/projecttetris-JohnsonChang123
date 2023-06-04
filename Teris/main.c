@@ -11,7 +11,7 @@
 #define FALL_KEY 0x20     // The key to fall, default = 0x20 (spacebar)
 
 #define chang_KEY 0x45     // The key to chang, default = 0x45 (E)
-
+#define exit_KEY 0x52      // The key to chang, default = 0x82 (R)
 
 
 #define FALL_DELAY 500    // The delay between each fall, default = 500
@@ -24,6 +24,7 @@
 #define FALL_FUNC() GetAsyncKeyState(FALL_KEY) & 0x8000
 
 #define chang_FUNC() GetAsyncKeyState(chang_KEY) & 0x8000
+#define exit_FUNC() GetAsyncKeyState(exit_KEY) & 0x8000
 
 
 
@@ -338,7 +339,9 @@ void printCanvas(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
         }
         printf("\033[0m|\n");
     }
+
     printf("分數:%d\n", state->score);
+    printf("按E更換方塊\n");
     Shape shapeData = shapes[state->queue[1]];
     
     printf("\033[%d;%dHNext:", 3, CANVAS_WIDTH * 2 + 5);
@@ -429,7 +432,24 @@ void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
     else if (FALL_FUNC()) {
         state->fallTime += FALL_DELAY * CANVAS_HEIGHT;
     }///////////////////////////////
+    
+    
+    
     else if (chang_FUNC()) {
+        char shapeId = state->queue[0];
+        Shape shapeData = shapes[shapeId];
+        int size = shapeData.size;
+
+
+        // remove the old position
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+
+                if (shapeData.rotates[state->rotate][i][j]) {
+                    resetBlock(&canvas[state->y + i][state->x + j]);
+                }
+            }
+        }
         //從move裡拿cleal fun
         state->queue[0] = state->queue[1];
         state->queue[1] = state->queue[2];
@@ -459,8 +479,38 @@ void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
 
             if (!move(canvas, state->x, state->y, state->rotate, state->x, state->y, state->rotate, state->queue[0]))
             {
-                printf("\033[%d;%dH\x1b[41m GAME OVER \x1b[0m\033[%d;%dH", CANVAS_HEIGHT - 3, CANVAS_WIDTH * 2 + 5, CANVAS_HEIGHT + 5, 0);
-                exit(0);
+                for (int i = 10; i > 0;i--) {
+                    system("cls");
+                    printf("\033[%d;%dH\x1b[41m GAME OVER \x1b[0m\033[%d;%dH\nscore:%d", CANVAS_HEIGHT - 3, CANVAS_WIDTH * 2 + 5, CANVAS_HEIGHT + 5, 0,state->score);
+                    printf("press R to END \n%d\n",i);
+                    if (exit_FUNC()) exit(0);
+                    Sleep(100);
+                }
+                srand(time(NULL));
+                state->x = CANVAS_WIDTH / 2;
+                state->y = 0;
+                state->score = 0;
+                state->rotate = 0;
+                state->fallTime = 0;
+
+                for (int i = 0; i < 4; i++)
+                {
+                    state->queue[i] = rand() % 7;
+                }
+
+                for (int i = 0; i < CANVAS_HEIGHT; i++)
+                {
+                    for (int j = 0; j < CANVAS_WIDTH; j++)
+                    {
+                        resetBlock(&canvas[i][j]);
+                    }
+                }
+
+                system("cls");
+                // printf("\e[?25l"); // hide cursor
+
+                move(canvas, state->x, state->y, state->rotate, state->x, state->y, state->rotate, state->queue[0]);
+
             }
         }
     }
@@ -470,7 +520,8 @@ void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
 int main()
 {
     srand(time(NULL));
-    State state = {
+    
+    State state ={
         .x = CANVAS_WIDTH / 2,
         .y = 0,
         .score = 0,
@@ -496,7 +547,7 @@ int main()
     // printf("\e[?25l"); // hide cursor
 
     move(canvas, state.x, state.y, state.rotate, state.x, state.y, state.rotate, state.queue[0]);
-
+  
     while (1)
     {
         logic(canvas, &state);
